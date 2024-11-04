@@ -6,13 +6,8 @@ import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.DateUtil;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class Validator {
 
@@ -28,6 +23,7 @@ public class Validator {
         initializeCauses();
         initializeIdentifications();
         initializeLocalities();
+        InitializeSubNetworks();
     }
 
 
@@ -56,9 +52,10 @@ public class Validator {
         if(dateCell.getCellType() == CellType.STRING)
             return new ImmutablePair<>("Fecha en formato texto |", null);
         if (DateUtil.isCellDateFormatted(dateCell)) {
-            error = "Fecha en columna no de tipo Fecha |";
-            date = LocalDateTime.ofEpochSecond(
-                    Double.valueOf(dateCell.getNumericCellValue()).longValue(), 0, ZoneOffset.UTC).toLocalDate();
+            error = "";
+            Date javaDate = dateCell.getDateCellValue();
+            if(javaDate != null)
+                date = javaDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         }
         return new ImmutablePair<>(error, date);
     }
@@ -67,7 +64,7 @@ public class Validator {
         if(dataCell.getCellType() == CellType.STRING){
             return new ImmutablePair<>("", dataCell.getStringCellValue());
         }
-        return new ImmutablePair<>("Columna que deberia estar en formato general no lo esta |", "");
+        return new ImmutablePair<>("Columna que deberia contener texto no contiene |", "");
     }
 
     public ImmutablePair<String, String> causeValidator(Cell dataCell){
@@ -92,25 +89,28 @@ public class Validator {
         }
         final String id = dataCell.getStringCellValue();
 
-        if(!identifications.containsKey(id)){
+        if(!identifications.containsKey(id.trim())){
             String corrected = identifications.entrySet().stream()
                     .filter((entrySet)->entrySet.getValue().contains(id))
                     .map((entrySet)->entrySet.getValue())
                     .findFirst().orElse("");
-            return new ImmutablePair<>("El tipo de ID ingresado no sigue las reglas", corrected);
+            return new ImmutablePair<>("El tipo de ID ingresado no sigue las reglas |", corrected);
         }
         return new ImmutablePair<>("", id);
     }
 
     public ImmutablePair<String, Long> idNumberValidator(Cell dataCell){
-        if(dataCell.getCellType() != CellType.STRING){
-            return new ImmutablePair<>("El numero de ID no esta en formato general |", 0l);
-        }
         try{
-            Long idNum = Long.parseLong(dataCell.getStringCellValue());
-            return new ImmutablePair<>("", idNum);
-        }catch(Exception e){
-            return new ImmutablePair<>("El numero de ID no es un numero valido |", 0l);
+            if (dataCell.getCellType() == CellType.STRING) {
+                return new ImmutablePair<>("", Long.parseLong(dataCell.getStringCellValue()));
+            } else if (dataCell.getCellType() == CellType.NUMERIC) {
+                return new ImmutablePair<>("", Long.parseLong(String.valueOf((long) dataCell.getNumericCellValue())));
+            }
+            else{
+                return new ImmutablePair<>("Numero de ID no es legible |", 0l);
+            }
+        }catch (Exception e){
+            return new ImmutablePair<>("El numero de ID es ilegible | ", 0l);
         }
     }
 
@@ -130,7 +130,8 @@ public class Validator {
             return new ImmutablePair<>("La subred no esta en formato general |", "");
         }
         if(!subNetworks.contains(dataCell.getStringCellValue())){
-            String corrected = subNetworks.contains(dataCell.getStringCellValue().toUpperCase()) ? dataCell.getStringCellValue().toUpperCase(): "";
+            System.out.println(dataCell.getStringCellValue());
+            String corrected = subNetworks.contains(dataCell.getStringCellValue().toUpperCase().trim()) ? dataCell.getStringCellValue().toUpperCase(): "";
             return new ImmutablePair<>("La subred no cumple con las reglas |", corrected);
         }
         return new ImmutablePair<>("", dataCell.getStringCellValue());
@@ -148,10 +149,10 @@ public class Validator {
             return new ImmutablePair<>("Como la causa no es valida entonces no se puede validar poblacion priorizada |", "");
         }
         if(causeAndPrioritazed.get(cause) && value.equals("no")){
-            return new ImmutablePair<>("La persona deberia estar en poblacion priorizada por su causa |", "");
+            return new ImmutablePair<>("La persona deberia estar en poblacion priorizada por su causa |", "Si");
         }
         if(!causeAndPrioritazed.get(cause) && value.equals("si")){
-            return new ImmutablePair<>("La persona NO deberia estar en poblacion priorizada por su causa |", "");
+            return new ImmutablePair<>("La persona NO deberia estar en poblacion priorizada por su causa |", "No");
         }
         return new ImmutablePair<>("", value);
     }

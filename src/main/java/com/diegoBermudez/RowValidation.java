@@ -18,6 +18,6 @@ public record RowValidation(
         String subNwtwork,
         LocalDate medicineDate,
         String prioritazed,
-        boolean corrected
+        String error
 ) {
 }
