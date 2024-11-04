@@ -32,9 +32,9 @@ public class Validator {
         boolean error = false;
         String correctedFirstName = "";
         String correctedSecondName = "";
-        if(firstName.getCellType() != CellType.STRING ) error = true;
+        if(firstName.getCellType() != Cell.CELL_TYPE_STRING ) error = true;
         else correctedFirstName = firstName.getStringCellValue();
-        if(secondName.getCellType() != CellType.STRING && secondName.getCellType() != CellType.BLANK) error = true;
+        if(secondName.getCellType() != Cell.CELL_TYPE_STRING && secondName.getCellType() != Cell.CELL_TYPE_BLANK) error = true;
         else correctedSecondName = secondName.getStringCellValue();
 
         if(correctedFirstName.isEmpty() && !correctedSecondName.isEmpty()){
@@ -55,6 +55,29 @@ public class Validator {
             date = LocalDate.ofInstant(dateCell.getDateCellValue().toInstant(), ZoneId.systemDefault());
         }
         return new ImmutablePair<>(error, date);
+    }
+
+    public ImmutablePair<Boolean, String> sentenceValidator(Cell dataCell){
+        if(dataCell.getCellType() == Cell.CELL_TYPE_STRING){
+            return new ImmutablePair<>(false, dataCell.getStringCellValue());
+        }
+        return new ImmutablePair<>(true, "");
+    }
+
+    public ImmutablePair<Boolean, String> causeValidator(Cell dataCell){
+        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+            return new ImmutablePair<>(true, "");
+        }
+        final String cause = dataCell.getStringCellValue();
+
+        if(!causeAndPrioritazed.containsKey(cause)){
+            String corrected = causeAndPrioritazed.entrySet().stream()
+                    .filter((entrySet)->entrySet.getKey().contains(cause))
+                    .map((entrySet)->entrySet.getKey())
+                    .findFirst().orElse("");
+            return new ImmutablePair<>(true, corrected);
+        }
+        return new ImmutablePair<>(false, cause);
     }
 
 

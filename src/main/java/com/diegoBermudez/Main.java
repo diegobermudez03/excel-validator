@@ -18,11 +18,6 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 public class Main {
 
     public static void main(String[] args) throws IOException {
-        initializeCauses();
-        initializeIdentifications();
-        initializeLocalities();
-
-
         Path currentPath = Paths.get("");
         String projectPath = currentPath.toAbsolutePath().toString();
         final String path = Arrays.stream(projectPath.split("\\\\"))
