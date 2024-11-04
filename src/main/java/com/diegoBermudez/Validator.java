@@ -80,7 +80,41 @@ public class Validator {
         return new ImmutablePair<>(false, cause);
     }
 
+    public ImmutablePair<Boolean, String> idTypeValidator(Cell dataCell){
+        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+            return new ImmutablePair<>(true, "");
+        }
+        final String id = dataCell.getStringCellValue();
 
+        if(!identifications.containsKey(id)){
+            String corrected = identifications.entrySet().stream()
+                    .filter((entrySet)->entrySet.getValue().contains(id))
+                    .map((entrySet)->entrySet.getValue())
+                    .findFirst().orElse("");
+            return new ImmutablePair<>(true, corrected);
+        }
+        return new ImmutablePair<>(false, id);
+    }
+
+    public ImmutablePair<Boolean, Long> idNumberValidator(Cell dataCell){
+        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+            return new ImmutablePair<>(true, 0l);
+        }
+        try{
+            Long idNum = Long.parseLong(dataCell.getStringCellValue());
+            return new ImmutablePair<>(false, idNum);
+        }catch(Exception e){
+            return new ImmutablePair<>(true, 0l);
+        }
+    }
+
+    public ImmutablePair<Boolean, String> localityValidator(Cell dataCell){
+        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+            return new ImmutablePair<>(false, "");
+        }
+        boolean error = localities.contains(dataCell.getStringCellValue());
+        return new ImmutablePair<>(error, error ? "" : dataCell.getStringCellValue());
+    }
 
 
     private void initializeCauses(){
