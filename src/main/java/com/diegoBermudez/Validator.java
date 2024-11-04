@@ -1,11 +1,14 @@
 package com.diegoBermudez;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
+import org.apache.poi.ss.usermodel.DateUtil;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,9 +35,9 @@ public class Validator {
         String error = "";
         String correctedFirstName = "";
         String correctedSecondName = "";
-        if(firstName.getCellType() != Cell.CELL_TYPE_STRING ) error += "Tipo de columna de primer nombre invalido |";
+        if(firstName.getCellType() != CellType.STRING ) error += "Tipo de columna de primer nombre invalido |";
         else correctedFirstName = firstName.getStringCellValue();
-        if(secondName.getCellType() != Cell.CELL_TYPE_STRING && secondName.getCellType() != Cell.CELL_TYPE_BLANK) error += "Tipo de columna de segundo nombre invalido |";
+        if(secondName.getCellType() != CellType.STRING && secondName.getCellType() != CellType.BLANK) error += "Tipo de columna de segundo nombre invalido |";
         else correctedSecondName = secondName.getStringCellValue();
 
         if(correctedFirstName.isEmpty() && !correctedSecondName.isEmpty()){
@@ -50,22 +53,25 @@ public class Validator {
     public ImmutablePair<String, LocalDate> dateValidator(Cell dateCell){
         LocalDate date = null;
         String error = "";
-        if (HSSFDateUtil.isCellDateFormatted(dateCell)) {
+        if(dateCell.getCellType() == CellType.STRING)
+            return new ImmutablePair<>("Fecha en formato texto |", null);
+        if (DateUtil.isCellDateFormatted(dateCell)) {
             error = "Fecha en columna no de tipo Fecha |";
-            date = LocalDate.ofInstant(dateCell.getDateCellValue().toInstant(), ZoneId.systemDefault());
+            date = LocalDateTime.ofEpochSecond(
+                    Double.valueOf(dateCell.getNumericCellValue()).longValue(), 0, ZoneOffset.UTC).toLocalDate();
         }
         return new ImmutablePair<>(error, date);
     }
 
     public ImmutablePair<String, String> sentenceValidator(Cell dataCell){
-        if(dataCell.getCellType() == Cell.CELL_TYPE_STRING){
+        if(dataCell.getCellType() == CellType.STRING){
             return new ImmutablePair<>("", dataCell.getStringCellValue());
         }
         return new ImmutablePair<>("Columna que deberia estar en formato general no lo esta |", "");
     }
 
     public ImmutablePair<String, String> causeValidator(Cell dataCell){
-        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+        if(dataCell.getCellType() != CellType.STRING){
             return new ImmutablePair<>("La columna causa no es de tipo texto |", "");
         }
         final String cause = dataCell.getStringCellValue();
@@ -81,7 +87,7 @@ public class Validator {
     }
 
     public ImmutablePair<String, String> idTypeValidator(Cell dataCell){
-        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+        if(dataCell.getCellType() != CellType.STRING){
             return new ImmutablePair<>("Tipo de Id no esta en formato general |", "");
         }
         final String id = dataCell.getStringCellValue();
@@ -97,7 +103,7 @@ public class Validator {
     }
 
     public ImmutablePair<String, Long> idNumberValidator(Cell dataCell){
-        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+        if(dataCell.getCellType() != CellType.STRING){
             return new ImmutablePair<>("El numero de ID no esta en formato general |", 0l);
         }
         try{
@@ -109,7 +115,7 @@ public class Validator {
     }
 
     public ImmutablePair<String, String> localityValidator(Cell dataCell){
-        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+        if(dataCell.getCellType() != CellType.STRING){
             return new ImmutablePair<>("La localidad no esta en formato texto |", "");
         }
         if(!localities.contains(dataCell.getStringCellValue())){
@@ -120,7 +126,7 @@ public class Validator {
     }
 
     public ImmutablePair<String, String> subNetworkValidator(Cell dataCell){
-        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+        if(dataCell.getCellType() != CellType.STRING){
             return new ImmutablePair<>("La subred no esta en formato general |", "");
         }
         if(!subNetworks.contains(dataCell.getStringCellValue())){
@@ -131,7 +137,7 @@ public class Validator {
     }
 
     public ImmutablePair<String, String> priorizatedPoblationValidator(Cell dataCell, String cause){
-        if(dataCell.getCellType() != Cell.CELL_TYPE_STRING){
+        if(dataCell.getCellType() != CellType.STRING){
             return new ImmutablePair<>("La poblacion priorizada no esta en formato general |", "");
         }
         final String value = dataCell.getStringCellValue().toLowerCase();
